@@ -18,14 +18,15 @@ app = FastAPI(title="Mergington High School API",
 current_dir = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
           "static")), name="static")
-        ADDITIONAL_ACTIVITIES = {
-            # Sports (2)
-            "Soccer Team": {
-                "description": "Competitive soccer team that plays inter-school matches and practices tactical skills.",
-                "schedule": "Mondays, Wednesdays, Fridays, 4:00 PM - 6:00 PM",
-                "max_participants": 25,
-                "participants": ["liam@mergington.edu", "ava@mergington.edu"]
-            },
+
+ADDITIONAL_ACTIVITIES = {
+    # Sports (2)
+    "Soccer Team": {
+        "description": "Competitive soccer team that plays inter-school matches and practices tactical skills.",
+        "schedule": "Mondays, Wednesdays, Fridays, 4:00 PM - 6:00 PM",
+        "max_participants": 25,
+        "participants": ["liam@mergington.edu", "ava@mergington.edu"]
+    },
             "Basketball Team": {
                 "description": "Organized basketball team with practice sessions and weekend games.",
                 "schedule": "Tuesdays and Thursdays, 4:30 PM - 6:30 PM",
@@ -62,12 +63,6 @@ app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
             }
         }
 
-        @app.on_event("startup")
-        def merge_additional_activities():
-            # Add the extra activities into the in-memory database at startup.
-            # The 'activities' dict is defined later in the module, so this runs
-            # after module import when the app starts.
-            activities.update(ADDITIONAL_ACTIVITIES)
 # In-memory activity database
 activities = {
     "Chess Club": {
@@ -101,6 +96,12 @@ def get_activities():
     return activities
 
 
+@app.on_event("startup")
+def merge_additional_activities():
+    """Add additional activities into the in-memory database at startup."""
+    activities.update(ADDITIONAL_ACTIVITIES)
+
+
 @app.post("/activities/{activity_name}/signup")
 def signup_for_activity(activity_name: str, email: str):
     """Sign up a student for an activity"""
@@ -116,3 +117,22 @@ def signup_for_activity(activity_name: str, email: str):
     # Add student
     activity["participants"].append(email)
     return {"message": f"Signed up {email} for {activity_name}"}
+
+
+@app.post("/activities/{activity_name}/unregister")
+def unregister_from_activity(activity_name: str, email: str):
+    """Unregister a student from an activity"""
+    # Validate activity exists
+    if activity_name not in activities:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    # Get the specific activity
+    activity = activities[activity_name]
+
+    # Validate student is signed up
+    if email not in activity["participants"]:
+        raise HTTPException(status_code=400, detail="Student is not registered for this activity")
+
+    # Remove student
+    activity["participants"].remove(email)
+    return {"message": f"Unregistered {email} from {activity_name}"}

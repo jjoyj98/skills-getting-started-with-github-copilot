@@ -166,6 +166,22 @@ footer {
   background-color: #e8eaf6;
   border-radius: 3px;
   font-size: 0.9em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.delete-participant {
+  cursor: pointer;
+  color: #666;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.delete-participant:hover {
+  color: #c62828;
+  background-color: rgba(198, 40, 40, 0.1);
 }
 
 .no-participants {
